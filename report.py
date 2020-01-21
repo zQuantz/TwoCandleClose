@@ -54,9 +54,14 @@ def report_(df):
 	message.attach(MIMEText(html, "html"))
 
 	for ticker in imgs:
+		
 		msgImage = MIMEImage(imgs[ticker])
 		msgImage.add_header('Content-ID', f'<{ticker}>')
 		message.attach(msgImage)
+
+		attachment = MIMEImage(imgs[ticker])
+		attachment.add_header('Content-Disposition', 'attachment', filename=ticker)         
+		message.attach(attachment)
 
 	# Create secure connection with server and send email
 	context = ssl.create_default_context()
