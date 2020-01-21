@@ -2,12 +2,13 @@ from mpl_finance import candlestick_ohlc as ohlc
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
+from report import report_
 
 import pandas as pd
-import numpy as np
 import requests
 import sys, os
 import pickle
+import shutil
 import time
 
 with open('data/tickers.pickle', 'rb') as file:
@@ -20,10 +21,15 @@ PARSER = "lxml"
 upper_band_length = 10
 lower_band_length = 8
 
+results = []
+
 def analyze(df):
 
 	df['UpperBand'] = df.High.rolling(upper_band_length, min_periods=1).mean()
 	df['LowerBand'] = df.Low.rolling(lower_band_length, min_periods=1).mean()
+
+	df['BandRange'] = (df.UpperBand - df.LowerBand)
+	df['BandRangeAvg'] = df.BandRange.rolling(20, min_periods=1).mean()
 
 	df['MA50'] = df.Close.rolling(50, min_periods=1).mean()
 	df['MA200'] = df.Close.rolling(200, min_periods=1).mean()
@@ -80,8 +86,8 @@ def plot(df, ticker):
 	data = df.values[:, :6]
 
 	## Plot
-	f, ax = plt.subplots(5, 1, figsize=(14, 8), sharex=True,
-						 gridspec_kw={"height_ratios" : [2, 1, 1, 1, 1]})
+	f, ax = plt.subplots(6, 1, figsize=(14, 8), sharex=True,
+						 gridspec_kw={"height_ratios" : [2, 1, 1, 1, 1, 1]})
 	
 	ohlc(ax[0], data[:, :-1], width=0.5)
 
@@ -96,13 +102,17 @@ def plot(df, ticker):
 	ax[2].plot(data[:, 0], df.AvgBodyProportion.values, color='r')
 	ax[2].set_title("Body/Wick Proportion", loc="right", fontsize=font_size)
 
-	ax[3].bar(data[:, 0], data[:, 5])
-	ax[3].plot(data[:, 0], df.AvgVolume, color='r')
-	ax[3].set_title("Volume", loc="right", fontsize=font_size)
+	ax[3].bar(data[:, 0], df.Change.values)
+	ax[3].plot(data[:, 0], df.AvgChange.values, color='r')
+	ax[3].set_title("Band Width", loc="right", fontsize=font_size)
 
-	ax[4].bar(data[:, 0], df.SecondUpperClose.values, color='g')
-	ax[4].bar(data[:, 0], df.SecondLowerClose.values * -1, color='r')
-	ax[4].set_title("Signal", loc="right", fontsize=font_size)
+	ax[4].bar(data[:, 0], data[:, 5])
+	ax[4].plot(data[:, 0], df.AvgVolume, color='r')
+	ax[4].set_title("Volume", loc="right", fontsize=font_size)
+
+	ax[5].bar(data[:, 0], df.SecondUpperClose.values, color='g')
+	ax[5].bar(data[:, 0], df.SecondLowerClose.values * -1, color='r')
+	ax[5].set_title("Signal", loc="right", fontsize=font_size)
 
 	for ax_ in ax: ax_.grid(True); ax_.xaxis_date(); 
 
@@ -116,12 +126,10 @@ def main(ticker):
 	try:
 		df = analyze(fetch(ticker))
 	except Exception as e:
-		print(e)
 		return
 
-	is_long = df.SecondUpperClose.values[0]
-	is_short = df.SecondLowerClose.values[0]
-	plot(df, ticker)
+	is_long = df.SecondUpperClose.values[-1]
+	is_short = df.SecondLowerClose.values[-1]
 
 	assert (is_long + is_short) != 2
 
@@ -132,9 +140,29 @@ def main(ticker):
 	else:
 		return
 
+	plot(df, ticker)
+	results.append([
+		ticker,
+		direction,
+		(df.BodyProportion.values[-1] + df.BodyProportion.values[-2]) / 2
+	])
+
 if __name__ == '__main__':
+
+	try:
+		shutil.rmtree("plots")
+	except:
+		pass
+
+	try:
+		os.mkdir("plots")
+	except:
+		pass
 
 	for ticker in tickers:
 		print("Processing:", ticker) ; main(ticker) ; 
-		break
-		time.sleep(3)
+		time.sleep(1)
+
+	df = pd.DataFrame(results, columns = ['Ticker', 'Direction', 'BPAvg'])
+	df = df.sort_values(['Direction', 'BPAvg'], ascending=[True, False])
+	report_(df)
