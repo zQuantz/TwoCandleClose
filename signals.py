@@ -11,7 +11,8 @@ import pickle
 import shutil
 import time
 
-with open('data/tickers.pickle', 'rb') as file:
+DIR = os.path.dirname(os.path.realpath(__file__))
+with open(f'{DIR}/data/tickers.pickle', 'rb') as file:
 	tickers = pickle.load(file)
 
 headers_mobile = { 'User-Agent' : 'Mozilla/5.0 (iPhone; CPU iPhone OS 9_1 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13B137 Safari/601.1'}
@@ -120,7 +121,7 @@ def plot(df, ticker):
 
 	f.suptitle(f'{ticker} - {tickers[ticker][0]} - {tickers[ticker][1]}')
 
-	plt.savefig(f'plots/{ticker}.png')
+	plt.savefig(f'{DIR}/plots/{ticker}.png')
 	plt.close()
 
 def main(ticker):
@@ -152,12 +153,12 @@ def main(ticker):
 if __name__ == '__main__':
 
 	try:
-		shutil.rmtree("plots")
+		shutil.rmtree(f"{DIR}/plots")
 	except:
 		pass
 
 	try:
-		os.mkdir("plots")
+		os.mkdir(f"{DIR}/plots")
 	except:
 		pass
 
@@ -167,4 +168,4 @@ if __name__ == '__main__':
 
 	df = pd.DataFrame(results, columns = ['Ticker', 'Direction', 'BPAvg'])
 	df = df.sort_values(['Direction', 'BPAvg'], ascending=[True, False])
-	report_(df)
+	report_(df, DIR)

@@ -10,7 +10,7 @@ import io
 
 imgs = {}
 
-def report_(df):
+def report_(df, DIR):
 
 	sender_email = "zqretrace@gmail.com"
 	receiver_email = "zqretrace@gmail.com, zach.barillaro@gmail.com, mp0941745@gmail.com, josephfalvo@outlook.com, lucasmduarte17@gmail.com, amandaymsiu@gmail.com"
@@ -34,7 +34,7 @@ def report_(df):
 		img_ = None
 		with io.BytesIO() as img_bytes:
 			img_bytes = io.BytesIO()
-			img = Image.open(f"plots/{ticker}.png", mode='r')
+			img = Image.open(f"{DIR}/plots/{ticker}.png", mode='r')
 			img.save(img_bytes, format='PNG')
 			img_ = img_bytes.getvalue()
 		plot_ = img_
@@ -70,8 +70,3 @@ def report_(df):
 		server.sendmail(
 			sender_email, receiver_email_list, message.as_string()
 		)
-
-if __name__ == '__main__':
-
-	df = pd.DataFrame([["XOP", "Short", 0.77], ["AAL", "Long", 0.77]])
-	report_(df)

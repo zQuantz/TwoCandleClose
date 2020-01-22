@@ -1,0 +1,1 @@
+/home/zquantz/anaconda3/bin/python3 /home/zquantz/Documents/Quant/TCC/signals.py
