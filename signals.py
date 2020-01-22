@@ -20,6 +20,7 @@ PARSER = "lxml"
 
 upper_band_length = 10
 lower_band_length = 8
+ma_length = 50
 
 results = []
 
@@ -67,7 +68,7 @@ def fetch(ticker):
 	df['Date'] = df['Date'].map(mdates.date2num)
 
 	df.columns = ['Date', 'Open', 'High', 'Low', 'Close', 'AdjClose', 'Volume']
-	df = df[['Date', 'Open', 'High', 'Low', 'AdjClose', 'Volume']]
+	df = df[['Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
 	df.columns = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume']
 
 	df['Open'] = df.Open.astype(float)
@@ -93,6 +94,7 @@ def plot(df, ticker):
 
 	ax[0].plot(data[:, 0], df.UpperBand.values, color='orange')
 	ax[0].plot(data[:, 0], df.LowerBand.values, color='orange')
+	ax[0].plot(data[:, 0], df.MA50.values, color="blue")
 	
 	ax[1].bar(data[:, 0], df.Change.values)
 	ax[1].plot(data[:, 0], df.AvgChange.values, color='r')
@@ -116,7 +118,7 @@ def plot(df, ticker):
 
 	for ax_ in ax: ax_.grid(True); ax_.xaxis_date(); 
 
-	f.suptitle(f'{ticker} - {tickers[ticker]}')
+	f.suptitle(f'{ticker} - {tickers[ticker][0]} - {tickers[ticker][1]}')
 
 	plt.savefig(f'plots/{ticker}.png')
 	plt.close()
